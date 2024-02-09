@@ -6,6 +6,8 @@ from random import randrange
 from unittest import TestCase
 from models import db, app
 from models.account import Account, DataValidationError
+from unittest.mock import MagicMock
+from flask_sqlalchemy import SQLAlchemy
 
 ACCOUNT_DATA = {}
 
@@ -52,4 +54,68 @@ class TestAccountModel(TestCase):
         account = Account(**data)
         account.create()
         self.assertEqual(len(Account.all()), 1)
+
+    def test_repr(self):
+        """Test the representation of an account"""
+        account = Account()
+        account.name = "Foo"
+        self.assertEqual(str(account), "<Account 'Foo'>")
+
+    def test_to_dict(self):
+        """ Test account to dict """
+        data = ACCOUNT_DATA[self.rand] # get a random account
+        account = Account(**data)
+        result = account.to_dict()
+        self.assertEqual(account.name, result["name"])
+        self.assertEqual(account.email, result["email"])
+        self.assertEqual(account.phone_number, result["phone_number"])
+        self.assertEqual(account.disabled, result["disabled"])
+        self.assertEqual(account.date_joined, result["date_joined"])
+
+    def test_from_dict(self):
+        """ Test account from dict """
+        data = ACCOUNT_DATA[self.rand] # get a random account
+        account = Account()
+        account.from_dict(data)
+        self.assertEqual(account.name, data["name"])
+        self.assertEqual(account.email, data["email"])
+        self.assertEqual(account.phone_number, data["phone_number"])
+        self.assertEqual(account.disabled, data["disabled"])
+
+    def test_update1(self):
+        """ Test account update """
+        name = "steve"
+        data = ACCOUNT_DATA[self.rand] # get a random account
+        account = Account(**data)
+        account.create()
+        account.name = name
+        account.update()
+        self.assertEqual(account.name, name)
+
+    def test_update2(self):
+        """ Test account update without id raises an error """
+        data = ACCOUNT_DATA[self.rand] # get a random account
+        account = Account(**data)
+        with self.assertRaises(DataValidationError):
+            account.update()
+
+    def test_delete(self):
+        data = ACCOUNT_DATA[self.rand] # get a random account
+        account = Account(**data)
+        account.create()
+        account.delete()
+        account2 = Account.find(account.id)
+        self.assertEqual(None, account2)
+    
+    def test_find(self):
+        """ Test find class method """
+        data = ACCOUNT_DATA[self.rand] # get a random account
+        query = MagicMock(name="query")
+        Account.query = query
+        Account.query.get.return_value = data
+        result = Account.find(1)
+        self.assertEqual(result["name"], data["name"])
+        self.assertEqual(result["email"], data["email"])
+        self.assertEqual(result["phone_number"], data["phone_number"])
+        self.assertEqual(result["disabled"], data["disabled"])
 

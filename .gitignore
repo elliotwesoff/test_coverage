@@ -6,6 +6,12 @@ instance
 __pycache__/
 *.py[cod]
 *$py.class
+bin
+include
+lib64
+man
+pyvenv.cfg
+*.pyc
 
 # C extensions
 *.so
